@@ -5,14 +5,27 @@ using System;
 public class CollisionHandler : MonoBehaviour
 {
     [SerializeField] int loadLevelDelay = 3;
+    [SerializeField] AudioClip crashAudio;
+    [SerializeField] AudioClip finishAudio;
+    [SerializeField] ParticleSystem crashParticles;
+    [SerializeField] ParticleSystem finishParticles;
+
+    AudioSource audioSource;
+
+    bool isTransitioning = false;
+
+    void Start()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
 
     private void OnCollisionEnter(Collision other)
     {
-
+        if(isTransitioning) {return;}
+        
         switch(other.gameObject.tag)
         {
             case "Friendly": 
-                Debug.Log("Hit Launchpad");
                 break; 
             case "Finish":
                 StartSuccesSequence();
@@ -27,18 +40,25 @@ public class CollisionHandler : MonoBehaviour
     {
         GetComponent<Movement>().enabled = false; 
     }
+
     private void StartSuccesSequence()
     {
-        //Add sound effect on win
         //add animation for landing
+        isTransitioning = true;
+        finishParticles.Play();
+        audioSource.Stop();
+        audioSource.PlayOneShot(finishAudio);
         DisableMovement();
         Invoke("LoadNextLevel", loadLevelDelay);
     }
 
     void StartCrashSequence()
     {
-        //Add sound effect on crash
         //add particle effect on crash
+        isTransitioning = true;
+        crashParticles.Play();
+        audioSource.Stop();
+        audioSource.PlayOneShot(crashAudio);
         DisableMovement();
         Invoke("ReloadCurrentLevel", loadLevelDelay);      
     }
@@ -53,11 +73,13 @@ public class CollisionHandler : MonoBehaviour
         }
             SceneManager.LoadScene(nextSceneIndex);      
     }
+
     void ReloadCurrentLevel()
     {
         int currentSceneIndex = SceneManager.GetActiveScene().buildIndex; 
         SceneManager.LoadScene(currentSceneIndex);
     }
 }
+
 
 
